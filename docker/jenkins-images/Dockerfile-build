@@ -1,0 +1,13 @@
+ARG GPU_SUFFIX=''
+ARG FROM_VERSION
+FROM docker.h2o.ai/opsh2oai/h2o-3/dev-build-base${GPU_SUFFIX}:${FROM_VERSION}
+
+# Set GRADLE USER env var
+ENV GRADLE_OPTS=-Dorg.gradle.daemon=false
+
+USER jenkins
+ARG H2O_BRANCH=master
+RUN \
+    BUILD_HADOOP=true /tmp/build-h2o-3 && \
+    rm -rf /tmp/build-h2o-3 /home/jenkins/.gradle/daemon
+USER root
