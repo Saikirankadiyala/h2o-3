@@ -8,10 +8,10 @@ class BuildConfig {
 
   public static final String DOCKER_REGISTRY = 'docker.h2o.ai'
 
-  private static final String DEFAULT_IMAGE_NAME = 'h2o-3-runtime'
-  private static final String DEFAULT_IMAGE_VERSION_TAG = '113'
+  private static final String DEFAULT_IMAGE_NAME = 'dev-build-4.10'
+  private static final int DEFAULT_IMAGE_VERSION_TAG = 1
   // This is the default image used for tests, build, etc.
-  public static final String DEFAULT_IMAGE = DOCKER_REGISTRY + '/opsh2oai/' + DEFAULT_IMAGE_NAME + ':' + DEFAULT_IMAGE_VERSION_TAG
+  public static final String DEFAULT_IMAGE = DOCKER_REGISTRY + '/opsh2oai/h2o-3/' + DEFAULT_IMAGE_NAME + ':' + DEFAULT_IMAGE_VERSION_TAG
   public static final String AWSCLI_IMAGE = DOCKER_REGISTRY + '/awscli'
 
   private static final String HADOOP_IMAGE_NAME_PREFIX = 'h2o-3-hadoop'
@@ -228,7 +228,7 @@ class BuildConfig {
     )
   }
 
-  String getDefaultImageVersion() {
+  int getDefaultImageVersion() {
     return DEFAULT_IMAGE_VERSION_TAG
   }
 
@@ -246,6 +246,42 @@ class BuildConfig {
 
   String getXGBImageForEnvironment(final String osName, final xgbEnv) {
     return "docker.h2o.ai/opsh2oai/h2o-3-xgb-runtime-${xgbEnv.targetName}:${osName}"
+  }
+
+  String getStageImage(final stageConfig) {
+    def component = stageConfig.component
+    if (component == COMPONENT_ANY) {
+      if (stageConfig.additionalTestPackages.contains(COMPONENT_PY)) {
+        component = COMPONENT_PY
+      } else if (stageConfig.additionalTestPackages.contains(COMPONENT_R)) {
+        component = COMPONENT_R
+      } else if (stageConfig.additionalTestPackages.contains(COMPONENT_JAVA)) {
+        component = COMPONENT_JAVA
+      }
+    }
+    def imageComponentName
+    def version
+    switch (component) {
+      case COMPONENT_JAVA:
+        imageComponentName = 'jdk'
+        version = stageConfig.javaVersion
+        break
+      case COMPONENT_PY:
+        imageComponentName = 'python'
+        version = stageConfig.pythonVersion
+        break
+      case COMPONENT_R:
+        imageComponentName = 'r'
+        version = stageConfig.rVersion
+        break
+      case COMPONENT_JS:
+        imageComponentName = 'python'
+        version = stageConfig.pythonVersion
+        break
+      default:
+        throw new IllegalArgumentException("Cannot find image for component ${component}")
+    }
+    return "${DOCKER_REGISTRY}/opsh2oai/h2o-3/dev-${imageComponentName}-${version}:${DEFAULT_IMAGE_VERSION_TAG}"
   }
 
   String getXGBNodeLabelForEnvironment(final Map xgbEnv) {

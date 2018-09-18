@@ -287,14 +287,17 @@ def call(final pipelineContext) {
     def standaloneStage = evaluate(stageTemplate.inspect())
     standaloneStage.stageName = "${distribution.name.toUpperCase()} ${distribution.version} - STANDALONE"
     standaloneStage.customData.mode = 'STANDALONE'
+    standaloneStage.image = pipelineContext.getBuildConfig().getSmokeHadoopImage(standaloneStage.customData.distribution, standaloneStage.customData.version, false)
 
     def onHadoopStage = evaluate(stageTemplate.inspect())
     onHadoopStage.stageName = "${distribution.name.toUpperCase()} ${distribution.version} - HADOOP"
     onHadoopStage.customData.mode = 'ON_HADOOP'
+    onHadoopStage.image = pipelineContext.getBuildConfig().getSmokeHadoopImage(onHadoopStage.customData.distribution, onHadoopStage.customData.version, false)
 
     def withKRBStage = evaluate(stageTemplate.inspect())
     withKRBStage.stageName = "${distribution.name.toUpperCase()} ${distribution.version} - KRB"
     withKRBStage.customData.mode = 'WITH_KRB'
+    withKRBStage.image = pipelineContext.getBuildConfig().getSmokeHadoopImage(withKRBStage.customData.distribution, withKRBStage.customData.version, true)
 
     HADOOP_STAGES += standaloneStage
     HADOOP_STAGES += onHadoopStage
@@ -450,7 +453,6 @@ private void invokeStage(final pipelineContext, final body) {
   config.additionalTestPackages = config.additionalTestPackages ?: []
   config.nodeLabel = config.nodeLabel ?: pipelineContext.getBuildConfig().getDefaultNodeLabel()
   config.executionScript = config.executionScript ?: DEFAULT_EXECUTION_SCRIPT
-  config.image = config.image ?: pipelineContext.getBuildConfig().DEFAULT_IMAGE
   config.makefilePath = config.makefilePath ?: pipelineContext.getBuildConfig().MAKEFILE_PATH
   config.archiveAdditionalFiles = config.archiveAdditionalFiles ?: []
   config.excludeAdditionalFiles = config.excludeAdditionalFiles ?: []
@@ -461,6 +463,17 @@ private void invokeStage(final pipelineContext, final body) {
   if (config.installRPackage == null) {
       config.installRPackage = true
   }
+
+  if (config.activatePythonEnv == null) {
+    config.activatePythonEnv = config.component == pipelineContext.getBuildConfig().COMPONENT_PY ||
+            config.component == pipelineContext.getBuildConfig().COMPONENT_JS ||
+            config.additionalTestPackages.contains(pipelineContext.getBuildConfig().COMPONENT_PY)
+  }
+  if (config.activateR == null) {
+    config.activateR = config.component == pipelineContext.getBuildConfig().COMPONENT_R ||
+            config.additionalTestPackages.contains(pipelineContext.getBuildConfig().COMPONENT_R)
+  }
+  config.image = config.image ?: pipelineContext.getBuildConfig().getStageImage(config)
 
   if (pipelineContext.getBuildConfig().componentChanged(config.component)) {
     def stageClosure = {

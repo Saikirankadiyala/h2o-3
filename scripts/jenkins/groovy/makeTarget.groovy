@@ -18,13 +18,6 @@ def call(final pipelineContext, final Closure body) {
     config.hasJUnit = true
   }
 
-  if (config.activatePythonEnv == null) {
-    config.activatePythonEnv = true
-  }
-  if (config.activateR == null) {
-    config.activateR = true
-  }
-
   config.h2o3dir = config.h2o3dir ?: 'h2o-3'
 
   if (config.customBuildAction == null) {
