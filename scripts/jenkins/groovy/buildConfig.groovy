@@ -13,6 +13,7 @@ class BuildConfig {
   // This is the default image used for tests, build, etc.
   public static final String DEFAULT_IMAGE = DOCKER_REGISTRY + '/opsh2oai/h2o-3/' + DEFAULT_IMAGE_NAME + ':' + DEFAULT_IMAGE_VERSION_TAG
   public static final String AWSCLI_IMAGE = DOCKER_REGISTRY + '/awscli'
+  public static final String S3CMD_IMAGE = DOCKER_REGISTRY + '/s3cmd'
 
   private static final String HADOOP_IMAGE_NAME_PREFIX = 'h2o-3-hadoop'
   private static final String HADOOP_IMAGE_VERSION_TAG = '49'
