@@ -1,4 +1,4 @@
-@Library('test-shared-library@1.9') _
+@Library('test-shared-library') _
 import ai.h2o.ci.buildsummary.StagesSummary
 
 // initialize build summary
@@ -15,7 +15,6 @@ properties([
 IMAGE_NAME_PREFIX = 'docker.h2o.ai/opsh2oai/h2o-3'
 GPU_SUFFIX = params.useGpu ? '-gpu' : ''
 
-def stages = []
 def gradleVersion
 def pipelineContext
 def previousVersion

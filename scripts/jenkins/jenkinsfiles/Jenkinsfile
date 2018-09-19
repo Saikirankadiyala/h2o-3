@@ -1,4 +1,4 @@
-@Library('test-shared-library@mr/retry-with-timeout') _
+@Library('test-shared-library') _
 
 final String MODE_PR = 'MODE_PR'
 final String MODE_MASTER = 'MODE_MASTER'
