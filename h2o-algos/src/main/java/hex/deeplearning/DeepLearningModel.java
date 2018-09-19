@@ -507,7 +507,7 @@ public class DeepLearningModel extends Model<DeepLearningModel,DeepLearningModel
           Log.info("Achieved requested predictive accuracy on the training data. Model building completed.");
           stopped_early = true;
         }
-        if (ScoreKeeper.stopEarly(ScoringInfo.scoreKeepers(scoring_history()),
+        if (ScoreKeeper.stopEarly(ScoringInfo.scoreKeepers(scoring_history(), get_params()._stopping_method, get_params()._nfolds > 1, _output._validation_set_present),
                 get_params()._stopping_rounds, _output.isClassifier(), get_params()._stopping_metric, get_params()._stopping_tolerance, "model's last", true
         )) {
           Log.info("Convergence detected based on simple moving average of the loss function for the past " + get_params()._stopping_rounds + " scoring events. Model building completed.");
