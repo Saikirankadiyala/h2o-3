@@ -614,6 +614,7 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
      *  columns.  The last name is the response column name (if any). */
     public String _names[];
     public boolean _validation_set_present = false;
+    public boolean _cv_enabled = false;
     
     public void setNames(String[] names) {
       _names = names;
