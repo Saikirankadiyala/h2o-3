@@ -24,14 +24,16 @@ def call(final pipelineContext) {
                             hasJUnit = false
                             archiveFiles = false
                             makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATH
-                        activatePythonEnv = true
-                            activateR = true}
+                            activatePythonEnv = true
+                            activateR = true
+                        }
                         findAutoMLTests(pipelineContext, pipelineContext.getBuildConfig().COMPONENT_PY)
                         makeTarget(pipelineContext) {
                             target = 'test-package-py'
                             hasJUnit = false
                             archiveFiles = false
-                            makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATHactivatePythonEnv = true
+                            makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATH
+                            activatePythonEnv = true
                             activateR = true
                         }
                         findAutoMLTests(pipelineContext, pipelineContext.getBuildConfig().COMPONENT_R)
@@ -39,7 +41,8 @@ def call(final pipelineContext) {
                             target = 'test-package-r'
                             hasJUnit = false
                             archiveFiles = false
-                            makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATHactivatePythonEnv = true
+                            makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATH
+                            activatePythonEnv = true
                             activateR = true
                         }
                         if (pipelineContext.getBuildConfig().getBuildHadoop()) {
@@ -48,7 +51,7 @@ def call(final pipelineContext) {
                                 hasJUnit = false
                                 archiveFiles = false
                                 makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATH
-                            activatePythonEnv = true
+                                activatePythonEnv = true
                                 activateR = true}
                         }
                         if (pipelineContext.getBuildConfig().componentChanged(pipelineContext.getBuildConfig().COMPONENT_JS)) {
@@ -56,7 +59,8 @@ def call(final pipelineContext) {
                                 target = 'test-package-js'
                                 hasJUnit = false
                                 archiveFiles = false
-                                makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATHactivatePythonEnv = true
+                                makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATH
+                                activatePythonEnv = true
                                 activateR = true
                             }
                         }
@@ -65,7 +69,8 @@ def call(final pipelineContext) {
                                 target = 'test-package-java'
                                 hasJUnit = false
                                 archiveFiles = false
-                                makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATHactivatePythonEnv = true
+                                makefilePath = pipelineContext.getBuildConfig().MAKEFILE_PATH
+                                activatePythonEnv = true
                                 activateR = true
                             }
                         }
@@ -77,7 +82,8 @@ def call(final pipelineContext) {
                                 pipelineContext.getUtils().stashFiles(
                                         this,
                                         pipelineContext.getBuildConfig().getStashNameForTestPackage(component),
-                                        "h2o-3/test-package-${component}.zip"
+                                        "h2o-3/test-package-${component}.zip",
+                                        true
                                 )
                                 if (component == pipelineContext.getBuildConfig().COMPONENT_PY) {
                                     pipelineContext.getUtils().stashXGBoostWheels(this, pipelineContext.getBuildConfig().getCurrentXGBVersion())
