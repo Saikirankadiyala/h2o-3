@@ -1,3 +1,5 @@
+@Library('test-shared-library') _
+
 def NODE_LABEL = 'master'
 
 def pipelineContext = null

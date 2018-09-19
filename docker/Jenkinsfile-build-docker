@@ -91,14 +91,19 @@ ansiColor('xterm') {
         buildInParallel(pipelineContext, previousVersion, COMPONENT_IMAGES)
 
         BUILD_BASE_IMAGE = [
-                "dev-build-base": [dockerfile: 'Dockerfile-build-base']
+            "dev-build-base": [dockerfile: 'Dockerfile-build-base']
         ]
         buildInParallel(pipelineContext, previousVersion, BUILD_BASE_IMAGE)
 
         BUILD_IMAGE = [
-                "dev-build-${gradleVersion}": [dockerfile: 'Dockerfile-build']
+            "dev-build-gradle-${gradleVersion}": [dockerfile: 'Dockerfile-build']
         ]
         buildInParallel(pipelineContext, previousVersion, BUILD_IMAGE)
+
+        RELEASE_IMAGE = [
+            "dev-release-gradle-${gradleVersion}": [dockerfile: 'Dockerfile-release', buildArgs: ["GRADLE_VERSION=${gradleVersion}"]]
+        ]
+        buildInParallel(pipelineContext, previousVersion, RELEASE_IMAGE)
     }
 }
 

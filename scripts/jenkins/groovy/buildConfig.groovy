@@ -8,7 +8,7 @@ class BuildConfig {
 
   public static final String DOCKER_REGISTRY = 'docker.h2o.ai'
 
-  private static final String DEFAULT_IMAGE_NAME = 'dev-build-4.10'
+  private static final String DEFAULT_IMAGE_NAME = 'dev-build-gradle-4.10'
   private static final int DEFAULT_IMAGE_VERSION_TAG = 1
   // This is the default image used for tests, build, etc.
   public static final String DEFAULT_IMAGE = DOCKER_REGISTRY + '/opsh2oai/h2o-3/' + DEFAULT_IMAGE_NAME + ':' + DEFAULT_IMAGE_VERSION_TAG
