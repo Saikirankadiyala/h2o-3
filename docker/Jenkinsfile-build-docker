@@ -85,7 +85,7 @@ ansiColor('xterm') {
         R_VERSION.each {version ->
             COMPONENT_IMAGES["dev-r-${version}"] = [dockerfile: 'Dockerfile-r', buildArgs: ["R_VERSION=${version}"]]
         }
-        JDK_VERSIONS = ['10', '11']
+        JDK_VERSIONS = ['8', '10', '11']
         JDK_VERSIONS.each {version ->
             COMPONENT_IMAGES["dev-jdk-${version}"] = [dockerfile: 'Dockerfile-jdk-others', buildArgs: ["JAVA_VERSION=${version}"]]
         }
