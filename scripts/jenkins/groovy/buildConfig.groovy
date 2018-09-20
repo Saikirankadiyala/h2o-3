@@ -1,6 +1,8 @@
-def call(final context, final String mode, final String commitMessage, final List<String> changes, final boolean ignoreChanges, final List<String> distributionsToBuild, final List<String> gradleOpts, final String xgbVersion) {
+def call(final context, final String mode, final String commitMessage, final List<String> changes,
+         final boolean ignoreChanges, final List<String> distributionsToBuild, final List<String> gradleOpts,
+         final String xgbVersion, final String gradleVersion) {
   def buildConfig = new BuildConfig()
-  buildConfig.initialize(context, mode, commitMessage, changes, ignoreChanges, distributionsToBuild, gradleOpts, xgbVersion)
+  buildConfig.initialize(context, mode, commitMessage, changes, ignoreChanges, distributionsToBuild, gradleOpts, xgbVersion, gradleVersion)
   return buildConfig
 }
 
@@ -8,10 +10,11 @@ class BuildConfig {
 
   public static final String DOCKER_REGISTRY = 'docker.h2o.ai'
 
-  private static final String DEFAULT_IMAGE_NAME = 'dev-build-gradle-4.10'
+  private static final String DEFAULT_IMAGE_NAME_PREFIX = 'dev-build-gradle'
+  private static final String DEFAULT_HADOOP_IMAGE_NAME_PREFIX = 'dev-build-hadoop-gradle'
+  private static final String DEFAULT_RELEASE_IMAGE_NAME_PREFIX = 'dev-release-gradle'
+
   private static final int DEFAULT_IMAGE_VERSION_TAG = 1
-  // This is the default image used for tests, build, etc.
-  public static final String DEFAULT_IMAGE = DOCKER_REGISTRY + '/opsh2oai/h2o-3/' + DEFAULT_IMAGE_NAME + ':' + DEFAULT_IMAGE_VERSION_TAG
   public static final String AWSCLI_IMAGE = DOCKER_REGISTRY + '/awscli'
   public static final String S3CMD_IMAGE = DOCKER_REGISTRY + '/s3cmd'
 
@@ -69,15 +72,18 @@ class BuildConfig {
   ]
   private List<String> additionalGradleOpts
   private String xgbVersion
+  private String gradleVersion
 
   void initialize(final context, final String mode, final String commitMessage, final List<String> changes,
-                  final boolean ignoreChanges, final List<String> distributionsToBuild, final List<String> gradleOpts, final String xgbVersion) {
+                  final boolean ignoreChanges, final List<String> distributionsToBuild, final List<String> gradleOpts,
+                  final String xgbVersion, final String gradleVersion) {
     this.mode = mode
     this.nodeLabel = nodeLabel
     this.commitMessage = commitMessage
     this.buildHadoop = mode == 'MODE_HADOOP'
     this.additionalGradleOpts = gradleOpts
     this.xgbVersion = xgbVersion
+    this.gradleVersion = gradleVersion
     this.hadoopDistributionsToBuild = distributionsToBuild
     if (ignoreChanges) {
       markAllComponentsForTest()
@@ -184,6 +190,21 @@ class BuildConfig {
     return DEFAULT_IMAGE_VERSION_TAG
   }
 
+  String getDefaultImage() {
+    if (buildHadoop) {
+      return getHadoopBuildImage()
+    }
+    return "${DOCKER_REGISTRY}/opsh2oai/h2o-3/${DEFAULT_IMAGE_NAME_PREFIX}-${getCurrentGradleVersion()}:${DEFAULT_IMAGE_VERSION_TAG}"
+  }
+
+  String getHadoopBuildImage() {
+    return "${DOCKER_REGISTRY}/opsh2oai/h2o-3/${DEFAULT_HADOOP_IMAGE_NAME_PREFIX}-${getCurrentGradleVersion()}:${DEFAULT_IMAGE_VERSION_TAG}"
+  }
+
+  String getReleaseImage() {
+    return "${DOCKER_REGISTRY}/opsh2oai/h2o-3/${DEFAULT_RELEASE_IMAGE_NAME_PREFIX}-${getCurrentGradleVersion()}:${DEFAULT_IMAGE_VERSION_TAG}"
+  }
+
   String getHadoopImageVersion() {
     return HADOOP_IMAGE_VERSION_TAG
   }
@@ -263,6 +284,10 @@ class BuildConfig {
 
   String getCurrentXGBVersion() {
     return xgbVersion
+  }
+
+  String getCurrentGradleVersion() {
+    return gradleVersion
   }
 
   private void detectChanges(List<String> changes) {

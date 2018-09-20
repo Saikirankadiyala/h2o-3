@@ -15,7 +15,6 @@ properties([
 IMAGE_NAME_PREFIX = 'docker.h2o.ai/opsh2oai/h2o-3'
 GPU_SUFFIX = params.useGpu ? '-gpu' : ''
 
-def gradleVersion
 def pipelineContext
 def previousVersion
 
@@ -28,10 +27,6 @@ ansiColor('xterm') {
                 // FIXME
                 // def scmEnv = checkout scm
                 def scmEnv = git url: 'https://github.com/h2oai/h2o-3', branch: 'mr/ita/341-multiple-images'
-
-                sh "cat gradle/wrapper/gradle-wrapper.properties | grep distributionUrl | egrep -o '([0-9]+\\.+)+[0-9]+'"
-                gradleVersion = sh(script: "cat gradle/wrapper/gradle-wrapper.properties | grep distributionUrl | egrep -o '([0-9]+\\.+)+[0-9]+'", returnStdout: true).trim()
-                echo "Gradle version: ${gradleVersion}"
 
                 def final pipelineContextFactory = load('scripts/jenkins/groovy/pipelineContext.groovy')
                 pipelineContext = pipelineContextFactory('.', 'MODE_BUILD_DOCKER', scmEnv, true)
@@ -96,12 +91,25 @@ ansiColor('xterm') {
         buildInParallel(pipelineContext, previousVersion, BUILD_BASE_IMAGE)
 
         BUILD_IMAGE = [
-            "dev-build-gradle-${gradleVersion}": [dockerfile: 'Dockerfile-build']
+            "dev-build-gradle-${pipelineContext.getBuildConfig().getCurrentGradleVersion()}": [
+                dockerfile: 'Dockerfile-build'
+            ]
         ]
         buildInParallel(pipelineContext, previousVersion, BUILD_IMAGE)
 
+        BUILD_HADOOP_IMAGE = [
+            "dev-build-hadoop-gradle-${pipelineContext.getBuildConfig().getCurrentGradleVersion()}": [
+                dockerfile: 'Dockerfile-build-hadoop',
+                buildArgs: ["GRADLE_VERSION=${pipelineContext.getBuildConfig().getCurrentGradleVersion()}"]
+            ]
+        ]
+        buildInParallel(pipelineContext, previousVersion, BUILD_HADOOP_IMAGE)
+
         RELEASE_IMAGE = [
-            "dev-release-gradle-${gradleVersion}": [dockerfile: 'Dockerfile-release', buildArgs: ["GRADLE_VERSION=${gradleVersion}"]]
+            "dev-release-gradle-${pipelineContext.getBuildConfig().getCurrentGradleVersion()}": [
+                dockerfile: 'Dockerfile-release',
+                buildArgs: ["GRADLE_VERSION=${pipelineContext.getBuildConfig().getCurrentGradleVersion()}"]
+            ]
         ]
         buildInParallel(pipelineContext, previousVersion, RELEASE_IMAGE)
     }
