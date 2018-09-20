@@ -8,7 +8,9 @@ buildSummary.get().addStagesSummary(this, new StagesSummary())
 
 properties([
     parameters([
-        booleanParam(defaultValue: false, description: 'Whether to build GPU enabled images', name: 'useGPU')
+        booleanParam(defaultValue: false, description: 'Whether to build GPU enabled images', name: 'useGPU'),
+        booleanParam(defaultValue: false, description: 'Build even if the image is already present in the repository', name: 'forceBuild'),
+        string(defaultValue: 'master', description: 'H2O-3 Branch used to load dependencies.', name: 'h2oBranch')
     ])
 ])
 
@@ -24,13 +26,21 @@ ansiColor('xterm') {
         buildSummary.stageWithSummary('Checkout and init') {
             node ('mr-0xc10') {
                 cleanWs()
-                // FIXME
-                // def scmEnv = checkout scm
-                def scmEnv = git url: 'https://github.com/h2oai/h2o-3', branch: 'mr/ita/341-multiple-images'
+                def scmEnv = checkout scm
 
                 def final pipelineContextFactory = load('scripts/jenkins/groovy/pipelineContext.groovy')
                 pipelineContext = pipelineContextFactory('.', 'MODE_BUILD_DOCKER', scmEnv, true)
-                previousVersion = pipelineContext.getBuildConfig().getDefaultImageVersion() - 1
+                def currentVersion = pipelineContext.getBuildConfig().getDefaultImageVersion()
+                currentBuild.displayName = "v${currentVersion} #${currentBuild.number}"
+                previousVersion = currentVersion - 1
+
+                if (!params.forceBuild) {
+                    if (pipelineContext.getUtils().dockerImageExistsInRegistry(this, 'docker.h2o.ai', 'opsh2oai/h2o-3/dev-base', "${currentVersion}")) {
+                        error "Image already exists. Use forceBuild if you wish to overwrite."
+                    }
+                } else {
+                    manager.addBadge("warning.gif", "forceBuild enabled")
+                }
 
                 dir('docker') {
                     stash name: 'docker-sources'
@@ -43,9 +53,7 @@ ansiColor('xterm') {
                 dir('dev-base') {
                     deleteDir()
                     unstash 'docker-sources'
-                    if (previousVersion > 0) {
-                        sh "docker pull ${IMAGE_NAME_PREFIX}/dev-base:${previousVersion}"
-                    }
+                    pullPreviousVersionIfRequired('dev-base', previousVersion)
                     sh """
                         docker build \
                             -t ${IMAGE_NAME_PREFIX}/dev-base${GPU_SUFFIX}:${pipelineContext.getBuildConfig().getDefaultImageVersion()} \
@@ -60,7 +68,7 @@ ansiColor('xterm') {
 
         JDK_BASE_IMAGES = [
                 'dev-jdk-8-base': [dockerfile: 'Dockerfile-jdk-8-base'],
-                'dev-jdk-others-base': [dockerfile: 'Dockerfile-jdk-others-base'],
+                'dev-jdk-others-base': [dockerfile: 'Dockerfile-jdk-others-base', buildArgs: ["H2O_BRANCH=${params.h2oBranch}"]],
         ]
         buildInParallel(pipelineContext, previousVersion, JDK_BASE_IMAGES)
 
@@ -73,7 +81,7 @@ ansiColor('xterm') {
         COMPONENT_IMAGES = [:]
         PYTHON_VERSIONS = ['2.7', '3.5', '3.6']
         PYTHON_VERSIONS.each {version ->
-            COMPONENT_IMAGES["dev-python-${version}"] = [dockerfile: 'Dockerfile-python', buildArgs: ["PYTHON_VERSION=${version}"]]
+            COMPONENT_IMAGES["dev-python-${version}"] = [dockerfile: 'Dockerfile-python', buildArgs: ["PYTHON_VERSION=${version}", "H2O_BRANCH=${params.h2oBranch}"]]
         }
         R_VERSION = ['3.4.1', '3.3.3']
         R_VERSION.each {version ->
@@ -92,7 +100,8 @@ ansiColor('xterm') {
 
         BUILD_IMAGE = [
             "dev-build-gradle-${pipelineContext.getBuildConfig().getCurrentGradleVersion()}": [
-                dockerfile: 'Dockerfile-build'
+                dockerfile: 'Dockerfile-build',
+                buildArgs: ["H2O_BRANCH=${params.h2oBranch}"]
             ]
         ]
         buildInParallel(pipelineContext, previousVersion, BUILD_IMAGE)
@@ -100,7 +109,7 @@ ansiColor('xterm') {
         BUILD_HADOOP_IMAGE = [
             "dev-build-hadoop-gradle-${pipelineContext.getBuildConfig().getCurrentGradleVersion()}": [
                 dockerfile: 'Dockerfile-build-hadoop',
-                buildArgs: ["GRADLE_VERSION=${pipelineContext.getBuildConfig().getCurrentGradleVersion()}"]
+                buildArgs: ["GRADLE_VERSION=${pipelineContext.getBuildConfig().getCurrentGradleVersion()}", "H2O_BRANCH=${params.h2oBranch}"]
             ]
         ]
         buildInParallel(pipelineContext, previousVersion, BUILD_HADOOP_IMAGE)
@@ -124,9 +133,7 @@ private buildInParallel(final pipelineContext, final previousVersion, final imag
                         dir (image) {
                             deleteDir()
                             unstash 'docker-sources'
-                            if (previousVersion > 0) {
-                                sh "docker pull ${IMAGE_NAME_PREFIX}/${image}:${previousVersion}"
-                            }
+                            pullPreviousVersionIfRequired(image, previousVersion)
                             config.buildArgs = config.buildArgs ?: []
                             def buildArgsStr = config.buildArgs.collect{ arg -> "--build-arg ${arg}"}.join(' ')
                             sh """
@@ -145,4 +152,10 @@ private buildInParallel(final pipelineContext, final previousVersion, final imag
             }
         ]
     })
+}
+
+def pullPreviousVersionIfRequired(final String image, final int previousVersion) {
+    if (previousVersion > 0) {
+        sh "docker pull ${IMAGE_NAME_PREFIX}/${image}:${previousVersion}"
+    }
 }
