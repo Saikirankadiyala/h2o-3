@@ -68,7 +68,7 @@ public class ScoringInfo extends Iced<ScoringInfo> {
               : scoring_history[i].scored_train;
       else {
         if (hasCV && hasValidSet) { // has validation dataset and CV enabled
-          sk[i] = stoppingMethod.equals(ScoreKeeper.StoppingMethods.xval)?scoring_history[i].scored_xval:scoring_history[i].scored_valid;
+          sk[i] = stoppingMethod.equals(ScoreKeeper.StoppingMethods.xval)?scoring_history[i].scored_train:scoring_history[i].scored_valid;
         } else if ((hasCV && !hasValidSet) || (!hasCV && hasValidSet))  {  // has training dataset only with CV enabled or has training dataset, validation dataset but CV not enabled
           sk[i] = stoppingMethod.equals(ScoreKeeper.StoppingMethods.train)?scoring_history[i].scored_train:scoring_history[i].scored_valid;
         } else  { // only training dataset with no CV and no validation dataset

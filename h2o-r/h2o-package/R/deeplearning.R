@@ -106,7 +106,7 @@
 #'        Otherwise, training dataset is used to determine early stopping.  If set to train: training data frame is used
 #'        to determine early stopping.  If set to valid: validation dataset is used to determine early stopping.  If set
 #'        to xval: hold out datasetin each fold of cross-validation is used to calculate early stopping conditions. Must
-#'        be one of: "AUTO", "train", "valid", "xval".
+#'        be one of: "AUTO", "train", "valid", "xval". Defaults to AUTO.
 #' @param max_runtime_secs Maximum allowed runtime in seconds for model training. Use 0 to disable. Defaults to 0.
 #' @param score_validation_sampling Method used to sample validation dataset for scoring. Must be one of: "Uniform", "Stratified". Defaults to
 #'        Uniform.

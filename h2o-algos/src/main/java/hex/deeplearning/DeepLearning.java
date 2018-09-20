@@ -208,10 +208,14 @@ public class DeepLearning extends ModelBuilder<DeepLearningModel,DeepLearningMod
   }
 
   public class DeepLearningDriver extends Driver {
+    public boolean _validation_set_present = false;
+    public boolean _cv_enabled = false;
+
     @Override public void computeImpl() {
       init(true); //this can change the seed if it was set to -1
       long cs = _parms.checksum();
       _validation_set_present = (_parms.valid() != null);
+      _cv_enabled = _parms._nfolds > 1;
 
       // Something goes wrong
       if (error_count() > 0)
@@ -425,7 +429,7 @@ public class DeepLearning extends ModelBuilder<DeepLearningModel,DeepLearningMod
           _job.update(0,"Scoring null model of autoencoder...");
           if (!mp._quiet_mode)
             Log.info("Scoring the null model of the autoencoder.");
-          model.doScoring(trainScoreFrame, validScoreFrame, _job._key, 0, false); //get the null model reconstruction error
+          model.doScoring(trainScoreFrame, validScoreFrame, _job._key, 0, false, _cv_enabled, _validation_set_present); //get the null model reconstruction error
         }
         // put the initial version of the model into DKV
         model.update(_job);
@@ -442,7 +446,7 @@ public class DeepLearning extends ModelBuilder<DeepLearningModel,DeepLearningMod
                   new DeepLearningTask2(_job._key, train, model.model_info(), rowFraction(train, mp, model), model.iterations).doAllNodes(             ).model_info()): //replicated data + multi-node mode
                   new DeepLearningTask (_job._key,        model.model_info(), rowFraction(train, mp, model), model.iterations).doAll     (    train    ).model_info()); //distributed data (always in multi-node mode)
           if (stop_requested() && !timeout()) throw new Job.JobCancelledException();
-          if (!model.doScoring(trainScoreFrame, validScoreFrame, _job._key, model.iterations, false)) break; //finished training (or early stopping or convergence)
+          if (!model.doScoring(trainScoreFrame, validScoreFrame, _job._key, model.iterations, false, _cv_enabled, _validation_set_present)) break; //finished training (or early stopping or convergence)
           if (timeout()) { //stop after scoring
             _job.update((long) (mp._epochs * train.numRows())); // mark progress as completed
             break;
@@ -465,7 +469,7 @@ public class DeepLearning extends ModelBuilder<DeepLearningModel,DeepLearningMod
             model.set_model_info(mi); // this overwrites also the parameters from the previous best model, but we only want the state
             model.model_info().parameters = parms; // restore the parameters
             model.update(_job);
-            model.doScoring(trainScoreFrame, validScoreFrame, _job._key, model.iterations, true);
+            model.doScoring(trainScoreFrame, validScoreFrame, _job._key, model.iterations, true, _cv_enabled, _validation_set_present);
             if (best_model.loss() != model.loss()) {
               if (!_parms._quiet_mode) {
                 Log.info("Best model's loss: " + best_model.loss() + " vs this model's loss (after overwriting it with the best model) : " + model.loss());
